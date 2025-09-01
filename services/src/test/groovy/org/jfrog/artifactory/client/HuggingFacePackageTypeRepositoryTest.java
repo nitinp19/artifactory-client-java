@@ -36,8 +36,6 @@ public class HuggingFacePackageTypeRepositoryTest extends BaseRepositoryTests {
 
     @Test
     public void testHuggingFaceLocalRepo() {
-        printEnvironmentDiagnostics();
-        
         HuggingFaceRepositorySettings settings = new HuggingFaceRepositorySettingsImpl();
         RepositoryBuilders repositoryBuilders = artifactory.repositories().builders();
         Repository localRepository = repositoryBuilders.localRepositoryBuilder()
