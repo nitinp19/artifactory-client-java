@@ -46,7 +46,7 @@ import org.jfrog.artifactory.client.model.repository.settings.impl.*;
     @JsonSubTypes.Type(value = CargoRepositorySettingsImpl.class, name = "cargo"),
     @JsonSubTypes.Type(value = TerraformRepositorySettingsImpl.class, name = "terraform"),
     @JsonSubTypes.Type(value = OciRepositorySettingsImpl.class, name = "oci"),
-    @JsonSubTypes.Type(value = HuggingFaceRepositorySettingsImpl.class, name = "HuggingFaceML")
+    @JsonSubTypes.Type(value = HuggingFaceRepositorySettingsImpl.class, name = "huggingfaceml")
 })
 
 public abstract class RepositorySettingsMixIn {
