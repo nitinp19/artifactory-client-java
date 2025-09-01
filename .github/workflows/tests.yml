@@ -37,6 +37,12 @@ jobs:
         uses: jfrog/.github/actions/install-local-artifactory@main
         with:
           RTLIC: ${{ secrets.RTLIC }}
+        env:
+          # Pin Artifactory version to match working environment
+          RT_VERSION: '7.120.3'
+          ARTIFACTORY_VERSION: '7.120.3'
+          JF_PRODUCT_VERSION: '7.120.3'
+          PRODUCT_VERSION: '7.120.3'
 
       - name: Install Java
         uses: actions/setup-java@v4
@@ -56,6 +62,11 @@ jobs:
           done
           echo "Artifactory did not start in time"
           exit 1
+
+      - name: Print Artifactory version details
+        run: |
+          echo "Fetching Artifactory version JSON..."
+          curl -sf http://localhost:8081/artifactory/api/system/version | tee artifactory-version.json | cat
 
       - name: Run tests
         run: ./gradlew${{ matrix.gradlewSuffix }} clean test
