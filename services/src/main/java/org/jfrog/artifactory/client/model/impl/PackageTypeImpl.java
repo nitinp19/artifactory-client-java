@@ -35,7 +35,8 @@ public enum PackageTypeImpl implements PackageType {
     go,
     cargo,
     terraform,
-    oci;
+    oci,
+    HuggingFaceML;
 
     @Override
     public boolean isCustom() {
