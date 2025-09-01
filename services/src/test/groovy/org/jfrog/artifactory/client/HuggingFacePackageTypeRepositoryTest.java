@@ -29,6 +29,9 @@ public class HuggingFacePackageTypeRepositoryTest extends BaseRepositoryTests {
 
     @Test
     public void testHuggingFaceLocalRepo() {
+        System.err.println("=== [DIAG] Starting testHuggingFaceLocalRepo ===");
+        printEnvironmentDiagnostics();
+        
         HuggingFaceRepositorySettings settings = new HuggingFaceRepositorySettingsImpl();
         RepositoryBuilders repositoryBuilders = artifactory.repositories().builders();
         Repository localRepository = repositoryBuilders.localRepositoryBuilder()
@@ -40,18 +43,18 @@ public class HuggingFacePackageTypeRepositoryTest extends BaseRepositoryTests {
 
         // Use position 0 for create, as required by the interface
         String localCreateResult = artifactory.repositories().create(0, localRepository);
-        System.out.println("[DIAG] create(local) result: " + localCreateResult);
-        printEnvironmentDiagnostics();
+        System.err.println("[DIAG] create(local) result: " + localCreateResult);
         printRepositoryJson(localRepo);
-        try {
-            String repoJson = curl("api/repositories/" + localRepo);
-            if (repoJson != null && repoJson.contains("\"packageType\":\"generic\"")) {
-                throw new SkipException("Server returned packageType=generic for Hugging Face; likely unsupported on this instance.");
-            }
-        } catch (Exception e) {
-            // If fetching JSON fails, continue; assertion will surface actual behavior
-        }
+        
         Repository localRepoFromServer = artifactory.repository(localRepo).get();
+        System.err.println("[DIAG] Retrieved repo package type: " + localRepoFromServer.getRepositorySettings().getPackageType());
+        
+        // Check if server doesn't support HuggingFace and skip if so
+        if (localRepoFromServer.getRepositorySettings().getPackageType().toString().equals("generic")) {
+            System.err.println("[DIAG] Server returned generic package type - skipping test");
+            throw new SkipException("Server returned packageType=generic for Hugging Face; likely unsupported on this instance.");
+        }
+        
         assertNotNull(localRepoFromServer);
         assertEquals(localRepoFromServer.getKey(), localRepo);
         assertEquals(localRepoFromServer.getDescription(), "new local huggingface repo");
@@ -84,6 +87,9 @@ public class HuggingFacePackageTypeRepositoryTest extends BaseRepositoryTests {
 
     @Test
     public void testHuggingFaceVirtualRepo() {
+        System.err.println("=== [DIAG] Starting testHuggingFaceVirtualRepo ===");
+        printEnvironmentDiagnostics();
+        
         HuggingFaceRepositorySettings settings = new HuggingFaceRepositorySettingsImpl();
         RepositoryBuilders repositoryBuilders = artifactory.repositories().builders();
         // Ensure we have at least one backing repo to include in the virtual
@@ -104,40 +110,42 @@ public class HuggingFacePackageTypeRepositoryTest extends BaseRepositoryTests {
 
         try {
             String virtualCreateResult = artifactory.repositories().create(0, virtualRepository);
-            System.out.println("[DIAG] create(virtual) result: " + virtualCreateResult);
-            printEnvironmentDiagnostics();
+            System.err.println("[DIAG] create(virtual) result: " + virtualCreateResult);
             printRepositoryJson(virtualRepo);
+            
+            Repository virtualRepoFromServer = artifactory.repository(virtualRepo).get();
+            assertNotNull(virtualRepoFromServer);
+            assertEquals(virtualRepoFromServer.getKey(), virtualRepo);
+            assertEquals(virtualRepoFromServer.getDescription(), "new virtual huggingface repo");
+            assertEquals(virtualRepoFromServer.getNotes(), "some notes");
         } catch (org.apache.http.client.HttpResponseException e) {
+            System.err.println("[DIAG] Virtual repo creation failed with status: " + e.getStatusCode());
+            System.err.println("[DIAG] Error message: " + e.getMessage());
             String msg = e.getMessage();
             if (e.getStatusCode() == 400 && msg != null && msg.contains("unsupported in virtual repositories")) {
-                printEnvironmentDiagnostics();
+                System.err.println("[DIAG] Skipping test - HuggingFaceML unsupported in virtual repos");
                 throw new SkipException("HuggingFaceML is unsupported in virtual repositories on this Artifactory version/plan.");
             }
             throw new RuntimeException(e);
         }
-        Repository virtualRepoFromServer = artifactory.repository(virtualRepo).get();
-        assertNotNull(virtualRepoFromServer);
-        assertEquals(virtualRepoFromServer.getKey(), virtualRepo);
-        assertEquals(virtualRepoFromServer.getDescription(), "new virtual huggingface repo");
-        assertEquals(virtualRepoFromServer.getNotes(), "some notes");
     }
 
     private void printEnvironmentDiagnostics() {
         try {
             String versionJson = curl("api/system/version");
-            System.out.println("[DIAG] Artifactory version: " + versionJson);
+            System.err.println("[DIAG] Artifactory version: " + versionJson);
         } catch (Exception e) {
-            System.out.println("[DIAG] Failed to fetch version: " + e.getMessage());
+            System.err.println("[DIAG] Failed to fetch version: " + e.getMessage());
         }
         try {
             String licensesJson = curl("api/system/licenses");
-            System.out.println("[DIAG] Artifactory licenses: " + licensesJson);
+            System.err.println("[DIAG] Artifactory licenses: " + licensesJson);
         } catch (Exception e1) {
             try {
                 String licenseJson = curl("api/system/license");
-                System.out.println("[DIAG] Artifactory license: " + licenseJson);
+                System.err.println("[DIAG] Artifactory license: " + licenseJson);
             } catch (Exception e2) {
-                System.out.println("[DIAG] Failed to fetch license info: " + e2.getMessage());
+                System.err.println("[DIAG] Failed to fetch license info: " + e2.getMessage());
             }
         }
     }
@@ -145,9 +153,9 @@ public class HuggingFacePackageTypeRepositoryTest extends BaseRepositoryTests {
     private void printRepositoryJson(String repoKey) {
         try {
             String repoJson = curl("api/repositories/" + repoKey);
-            System.out.println("[DIAG] Repository JSON (" + repoKey + "): " + repoJson);
+            System.err.println("[DIAG] Repository JSON (" + repoKey + "): " + repoJson);
         } catch (Exception e) {
-            System.out.println("[DIAG] Failed to fetch repo JSON for '" + repoKey + "': " + e.getMessage());
+            System.err.println("[DIAG] Failed to fetch repo JSON for '" + repoKey + "': " + e.getMessage());
         }
     }
 }

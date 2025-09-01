@@ -49,6 +49,9 @@ test {
     testLogging {
         events "passed", "skipped", "failed", "standardOut", "standardError"
         showStandardStreams = true
-        exceptionFormat "full"
+        exceptionFormat = "full"
+        showStackTraces = true
+        showCauses = true
     }
+    outputs.upToDateWhen { false }
 }
