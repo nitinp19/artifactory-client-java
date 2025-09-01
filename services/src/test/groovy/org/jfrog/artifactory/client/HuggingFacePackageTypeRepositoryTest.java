@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-public class HuggingFacePackageTypeRepositoryTest extends ArtifactoryTestsBase {
+public class HuggingFacePackageTypeRepositoryTest extends BaseRepositoryTests {
 
     private final String localRepo = "huggingface-local-1";
     private final String federatedRepo = "huggingface-federated-1";
@@ -38,7 +38,10 @@ public class HuggingFacePackageTypeRepositoryTest extends ArtifactoryTestsBase {
                 .build();
 
         // Use position 0 for create, as required by the interface
-        artifactory.repositories().create(0, localRepository);
+        String localCreateResult = artifactory.repositories().create(0, localRepository);
+        System.out.println("[DIAG] create(local) result: " + localCreateResult);
+        printEnvironmentDiagnostics();
+        printRepositoryJson(localRepo);
         Repository localRepoFromServer = artifactory.repository(localRepo).get();
         assertNotNull(localRepoFromServer);
         assertEquals(localRepoFromServer.getKey(), localRepo);
@@ -59,7 +62,10 @@ public class HuggingFacePackageTypeRepositoryTest extends ArtifactoryTestsBase {
                 .repositorySettings(settings)
                 .build();
 
-        artifactory.repositories().create(0, federatedRepository);
+        String federatedCreateResult = artifactory.repositories().create(0, federatedRepository);
+        System.out.println("[DIAG] create(federated) result: " + federatedCreateResult);
+        printEnvironmentDiagnostics();
+        printRepositoryJson(federatedRepo);
         Repository federatedRepoFromServer = artifactory.repository(federatedRepo).get();
         assertNotNull(federatedRepoFromServer);
         assertEquals(federatedRepoFromServer.getKey(), federatedRepo);
@@ -71,18 +77,59 @@ public class HuggingFacePackageTypeRepositoryTest extends ArtifactoryTestsBase {
     public void testHuggingFaceVirtualRepo() {
         HuggingFaceRepositorySettings settings = new HuggingFaceRepositorySettingsImpl();
         RepositoryBuilders repositoryBuilders = artifactory.repositories().builders();
+        // Ensure we have at least one backing repo to include in the virtual
+        Repository localForVirtual = repositoryBuilders.localRepositoryBuilder()
+                .key(localRepo)
+                .description("local for virtual huggingface repo")
+                .notes("some notes")
+                .repositorySettings(settings)
+                .build();
+        artifactory.repositories().create(0, localForVirtual);
         Repository virtualRepository = repositoryBuilders.virtualRepositoryBuilder()
                 .key(virtualRepo)
                 .description("new virtual huggingface repo")
                 .notes("some notes")
                 .repositorySettings(settings)
+                .repositories(java.util.Collections.singletonList(localRepo))
                 .build();
 
-        artifactory.repositories().create(0, virtualRepository);
+        String virtualCreateResult = artifactory.repositories().create(0, virtualRepository);
+        System.out.println("[DIAG] create(virtual) result: " + virtualCreateResult);
+        printEnvironmentDiagnostics();
+        printRepositoryJson(virtualRepo);
         Repository virtualRepoFromServer = artifactory.repository(virtualRepo).get();
         assertNotNull(virtualRepoFromServer);
         assertEquals(virtualRepoFromServer.getKey(), virtualRepo);
         assertEquals(virtualRepoFromServer.getDescription(), "new virtual huggingface repo");
         assertEquals(virtualRepoFromServer.getNotes(), "some notes");
+    }
+
+    private void printEnvironmentDiagnostics() {
+        try {
+            String versionJson = curl("api/system/version");
+            System.out.println("[DIAG] Artifactory version: " + versionJson);
+        } catch (Exception e) {
+            System.out.println("[DIAG] Failed to fetch version: " + e.getMessage());
+        }
+        try {
+            String licensesJson = curl("api/system/licenses");
+            System.out.println("[DIAG] Artifactory licenses: " + licensesJson);
+        } catch (Exception e1) {
+            try {
+                String licenseJson = curl("api/system/license");
+                System.out.println("[DIAG] Artifactory license: " + licenseJson);
+            } catch (Exception e2) {
+                System.out.println("[DIAG] Failed to fetch license info: " + e2.getMessage());
+            }
+        }
+    }
+
+    private void printRepositoryJson(String repoKey) {
+        try {
+            String repoJson = curl("api/repositories/" + repoKey);
+            System.out.println("[DIAG] Repository JSON (" + repoKey + "): " + repoJson);
+        } catch (Exception e) {
+            System.out.println("[DIAG] Failed to fetch repo JSON for '" + repoKey + "': " + e.getMessage());
+        }
     }
 }
