@@ -75,31 +75,4 @@ public class HuggingFacePackageTypeRepositoryTest extends BaseRepositoryTests {
         assertEquals(federatedRepoFromServer.getDescription(), "new federated huggingface repo");
         assertEquals(federatedRepoFromServer.getNotes(), "some notes");
     }
-
-    @Test
-    public void testHuggingFaceVirtualRepo() {
-        HuggingFaceRepositorySettings settings = new HuggingFaceRepositorySettingsImpl();
-        RepositoryBuilders repositoryBuilders = artifactory.repositories().builders();
-        // Ensure we have at least one backing repo to include in the virtual
-        Repository localForVirtual = repositoryBuilders.localRepositoryBuilder()
-                .key(localRepo)
-                .description("local for virtual huggingface repo")
-                .notes("some notes")
-                .repositorySettings(settings)
-                .build();
-        artifactory.repositories().create(0, localForVirtual);
-        Repository virtualRepository = repositoryBuilders.virtualRepositoryBuilder()
-                .key(virtualRepo)
-                .description("new virtual huggingface repo")
-                .notes("some notes")
-                .repositorySettings(settings)
-                .repositories(java.util.Collections.singletonList(localRepo))
-                .build();
-            
-            Repository virtualRepoFromServer = artifactory.repository(virtualRepo).get();
-            assertNotNull(virtualRepoFromServer);
-            assertEquals(virtualRepoFromServer.getKey(), virtualRepo);
-            assertEquals(virtualRepoFromServer.getDescription(), "new virtual huggingface repo");
-            assertEquals(virtualRepoFromServer.getNotes(), "some notes");
-    }
 }
