@@ -14,7 +14,7 @@ public class HuggingFaceRepositorySettingsImpl extends AbstractRepositorySetting
 
     @Override
     public PackageType getPackageType() {
-        return PackageTypeImpl.HuggingFaceML;
+        return PackageTypeImpl.huggingfaceml;
     }
 
     @Override

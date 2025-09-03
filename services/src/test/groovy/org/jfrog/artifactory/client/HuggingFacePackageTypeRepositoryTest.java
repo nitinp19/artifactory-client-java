@@ -54,7 +54,7 @@ public class HuggingFacePackageTypeRepositoryTest extends BaseRepositoryTests {
         assertEquals(localRepoFromServer.getDescription(), "new local huggingface repo");
         assertEquals(localRepoFromServer.getNotes(), "some notes");
         assertEquals(localRepoFromServer.getRepoLayoutRef(), "simple-default");
-        assertEquals(localRepoFromServer.getRepositorySettings().getPackageType(), PackageTypeImpl.HuggingFaceML);
+        assertEquals(localRepoFromServer.getRepositorySettings().getPackageType(), PackageTypeImpl.huggingfaceml);
     }
 
     @Test

@@ -18,7 +18,7 @@ public class HuggingFaceRepositorySettingsTest {
 
         // Test package type
         PackageType packageType = settings.getPackageType();
-        assertEquals(packageType, PackageTypeImpl.HuggingFaceML);
+        assertEquals(packageType, PackageTypeImpl.huggingfaceml);
 
         // Test default layout
         assertEquals(settings.getRepoLayout(), "simple-default");
